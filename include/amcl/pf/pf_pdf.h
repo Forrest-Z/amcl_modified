@@ -78,6 +78,7 @@ double pf_ran_gaussian(double sigma);
 // Generate a sample from the the pdf.
 pf_vector_t pf_pdf_gaussian_sample(pf_pdf_gaussian_t *pdf);
 
+double pf_normal_distribution(double a, double b);
 
 #if 0
 

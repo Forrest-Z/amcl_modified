@@ -81,7 +81,15 @@ typedef struct
 
 
 // Create a tree
+//extern pf_kdtree_t *pf_kdtree_alloc(int max_size, double xres = 0.5, double yres = 0.5, int ares = 10);
 extern pf_kdtree_t *pf_kdtree_alloc(int max_size);
+extern pf_kdtree_t *pf_kdtree_alloc_c(int max_size, double xres, double yres, int ares);
+
+// Convert a pose to a kdtree key
+extern void pose2key(double const * res, pf_vector_t const pose, int* key);
+
+// Convert a kdtree key to a pose
+extern void key2pose(double const * res, int const * key, pf_vector_t* pose); 
 
 // Destroy a tree
 extern void pf_kdtree_free(pf_kdtree_t *self);

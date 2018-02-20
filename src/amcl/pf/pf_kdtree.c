@@ -63,15 +63,20 @@
 
 ////////////////////////////////////////////////////////////////////////////////
 // Create a tree
-pf_kdtree_t *pf_kdtree_alloc(int max_size)
+//pf_kdtree_t *pf_kdtree_alloc(int max_size, double xres, double yres, int ares)
+pf_kdtree_t *pf_kdtree_alloc(int max_size){return pf_kdtree_alloc_c(max_size, 0.5, 0.5, 10);}
+pf_kdtree_t *pf_kdtree_alloc_c(int max_size, double xres, double yres, int ares)
 {
   pf_kdtree_t *self;
 
   self = calloc(1, sizeof(pf_kdtree_t));
-
-  self->size[0] = 0.50;
-  self->size[1] = 0.50;
-  self->size[2] = (10 * M_PI / 180);
+  //make the resolution (size) as arguments
+  self->size[0] = xres;
+  self->size[1] = yres;
+  self->size[2] = (ares * M_PI / 180);
+  //self->size[0] = 0.50;
+  //self->size[1] = 0.50;
+  //self->size[2] = (10 * M_PI / 180);
 
   self->root = NULL;
 
@@ -106,16 +111,59 @@ void pf_kdtree_clear(pf_kdtree_t *self)
   return;
 }
 
+// Convert a pose to a kdtree key
+void pose2key(double const * res, pf_vector_t const pose, int* key)
+{
+  key[0] = floor(pose.v[0] / res[0]);
+  key[1] = floor(pose.v[1] / res[1]);
+  key[2] = floor(pose.v[2] / res[2]);
+}
+
+// Convert a kdtree key to a pose
+void key2pose(double const * res, int const * key, pf_vector_t* pose)
+{
+
+} 
 
 ////////////////////////////////////////////////////////////////////////////////
 // Insert a pose into the tree.
 void pf_kdtree_insert(pf_kdtree_t *self, pf_vector_t pose, double value)
 {
   int key[3];
+  //TODO pose2key
+  pose2key(self->size, pose, key);
+  //key[0] = floor(pose.v[0] / self->size[0]);
+  //key[1] = floor(pose.v[1] / self->size[1]);
+  //key[2] = floor(pose.v[2] / self->size[2]);
 
-  key[0] = floor(pose.v[0] / self->size[0]);
-  key[1] = floor(pose.v[1] / self->size[1]);
-  key[2] = floor(pose.v[2] / self->size[2]);
+  assert(self->node_count < self->node_max_count);//if this happens, should expand the size of this kdtree
+
+  if(self->node_count +2 >= self->node_max_count)
+  {
+    int new_max_count = self->node_max_count*2;
+    pf_kdtree_node_t* new_nodes = calloc(new_max_count, sizeof(pf_kdtree_node_t));
+    pf_kdtree_node_t* old_nodes = self->nodes;
+    int i;
+    for(i = 0 ; i < self->node_count ; ++i)
+    {
+      new_nodes[i] = old_nodes[i];
+      if(old_nodes[i].children[0] != NULL)
+      {
+        new_nodes[i].children[0] = new_nodes + (old_nodes[i].children[0] - old_nodes);
+        new_nodes[i].children[1] = new_nodes + (old_nodes[i].children[1] - old_nodes);
+      }
+      assert(new_nodes[i].key[0] == old_nodes[i].key[0]);
+      assert(new_nodes[i].key[1] == old_nodes[i].key[1]);
+      assert(new_nodes[i].key[2] == old_nodes[i].key[2]);
+    }
+
+    self->root = new_nodes;
+    old_nodes = NULL;
+    free(self->nodes);
+    self->nodes = new_nodes;
+    self->node_max_count = new_max_count;
+  }
+
 
   self->root = pf_kdtree_insert_node(self, NULL, self->root, key, value);
 
@@ -152,9 +200,11 @@ double pf_kdtree_get_prob(pf_kdtree_t *self, pf_vector_t pose)
   int key[3];
   pf_kdtree_node_t *node;
 
-  key[0] = floor(pose.v[0] / self->size[0]);
-  key[1] = floor(pose.v[1] / self->size[1]);
-  key[2] = floor(pose.v[2] / self->size[2]);
+  //TODO pose2key
+  pose2key(self->size, pose, key);
+  //key[0] = floor(pose.v[0] / self->size[0]);
+  //key[1] = floor(pose.v[1] / self->size[1]);
+  //key[2] = floor(pose.v[2] / self->size[2]);
 
   node = pf_kdtree_find_node(self, self->root, key);
   if (node == NULL)
@@ -170,9 +220,11 @@ int pf_kdtree_get_cluster(pf_kdtree_t *self, pf_vector_t pose)
   int key[3];
   pf_kdtree_node_t *node;
 
-  key[0] = floor(pose.v[0] / self->size[0]);
-  key[1] = floor(pose.v[1] / self->size[1]);
-  key[2] = floor(pose.v[2] / self->size[2]);
+  //TODO pose2key
+  pose2key(self->size, pose, key);
+  //key[0] = floor(pose.v[0] / self->size[0]);
+  //key[1] = floor(pose.v[1] / self->size[1]);
+  //key[2] = floor(pose.v[2] / self->size[2]);
 
   node = pf_kdtree_find_node(self, self->root, key);
   if (node == NULL)
@@ -221,7 +273,7 @@ pf_kdtree_node_t *pf_kdtree_insert_node(pf_kdtree_t *self, pf_kdtree_node_t *par
   // If the node doesnt exist yet...
   if (node == NULL)
   {
-    assert(self->node_count < self->node_max_count);
+    //assert(self->node_count < self->node_max_count);//if this happens, should expand the size of this kdtree
     node = self->nodes + self->node_count++;
     memset(node, 0, sizeof(pf_kdtree_node_t));
 
@@ -461,6 +513,7 @@ void pf_kdtree_draw_node(pf_kdtree_t *self, pf_kdtree_node_t *node, rtk_fig_t *f
 
   if (node->leaf)
   {
+    //TODO key2pose
     ox = (node->key[0] + 0.5) * self->size[0];
     oy = (node->key[1] + 0.5) * self->size[1];
 

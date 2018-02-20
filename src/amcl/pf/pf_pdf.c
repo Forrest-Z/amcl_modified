@@ -125,6 +125,12 @@ pf_vector_t pf_pdf_gaussian_sample(pf_pdf_gaussian_t *pdf)
   return x;
 }
 
+double pf_normal_distribution(double a, double b)
+{
+  if(b==0.0) return 1.0;//if variance is zero, it is a dirac delta function
+  else return (1.0 / (b * sqrt(2*M_PI))) *
+              exp( a*a / (-2.0*b*b));
+}
 // Draw randomly from a zero-mean Gaussian distribution, with standard
 // deviation sigma.
 // We use the polar form of the Box-Muller transformation, explained here:
