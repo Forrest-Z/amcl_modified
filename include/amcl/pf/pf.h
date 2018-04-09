@@ -162,6 +162,7 @@ void pf_update_augmented_weight(pf_t* pf, double w_avg);
 
 // Normalize sample weights and return the average weight of all samples
 double pf_normalize(pf_t* pf, double total);
+double pf_normalize_set(pf_sample_set_t* pf, double total);
 
 // Resample the distribution
 void pf_update_resample(pf_t *pf);

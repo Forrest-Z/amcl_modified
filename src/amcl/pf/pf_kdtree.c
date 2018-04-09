@@ -414,7 +414,10 @@ void pf_kdtree_cluster(pf_kdtree_t *self)
   pf_kdtree_node_t **queue, *node;
 
   queue_count = 0;
-  queue = calloc(self->node_count, sizeof(queue[0]));
+  //queue = calloc(self->node_count, sizeof(queue[0]));
+  size_t queue_size = self->node_count;
+  size_t pointer_size = sizeof(queue[0]);
+  queue = calloc(queue_size, pointer_size);
 
   // Put all the leaves in a queue
   for (i = 0; i < self->node_count; i++)
@@ -437,7 +440,10 @@ void pf_kdtree_cluster(pf_kdtree_t *self)
   while (queue_count > 0)
   {
     node = queue[--queue_count];
-
+    //--queue_count;
+    //int idx = queue_count;
+    //node = queue[idx];
+    //queue[idx] = NULL;
     // If this node has already been labelled, skip it
     if (node->cluster >= 0)
       continue;

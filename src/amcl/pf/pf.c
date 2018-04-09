@@ -268,6 +268,22 @@ double pf_normalize(pf_t* pf, double total)
   return w_avg;
 }
 
+//normalize weights of current set and return average weight
+double pf_normalize_set(pf_sample_set_t* set, double total)
+{
+  // Normalize weights
+  double w_avg=0.0;
+  int i;
+  pf_sample_t* sample;
+  for (i = 0; i < set->sample_count; i++)
+  {
+    sample = set->samples + i;
+    w_avg += sample->weight;
+    sample->weight /= total;
+  }
+  return w_avg;
+}
+
 void pf_update_augmented_weight(pf_t* pf, double w_avg)
 {
   pf_sample_set_t* set = pf->sets + pf->current_set;
